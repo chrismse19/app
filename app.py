@@ -17,6 +17,7 @@ URL_DATOS_PAISES = 'datos/paises.gpkg'
 
 # Título de la app
 st.title("Transporte de viajes aéreos")
+st.subheader("Proyecto final Alexander Araica Urbina y Christopher Cadena Calvo")
 
 csv_url = 'https://raw.githubusercontent.com/chrismse19/proyecto_progra/refs/heads/main/datos.csv'
 
@@ -48,8 +49,7 @@ if pais_seleccionado != 'Todos':
 else:
     datos_filtrados = datos
 
-# Título de la página principal
-st.title("Datos de Viajes Aéreos y Gráfico Interactivo (2019)")
+
 
 # Mostrar tabla de datos filtrados
 st.subheader("Datos de Viajes Aéreos (2019)")
