@@ -18,92 +18,65 @@ URL_DATOS_PAISES = 'datos/paises.gpkg'
 # Título de la app
 st.title("Transporte de viajes aéreos")
 
-# Función para cargar los datos con caché
+csv_url = 'https://raw.githubusercontent.com/chrismse19/proyecto_progra/refs/heads/main/datos.csv'
+
 @st.cache_data
 def cargar_datos(url):
-    try:
-        datos = pd.read_csv(url)
-        return datos
-    except Exception as e:
-        st.error(f"Error al cargar los datos desde {url}: {e}")
-        return None
+    """Función para cargar los datos desde una URL."""
+    return pd.read_csv(url)
 
-# Función para cargar los datos de los países
-@st.cache_data
-def cargar_datos_paises():
-    paises = gpd.read_file(URL_DATOS_PAISES)
-    return paises
+# Cargar datos
+datos = cargar_datos(csv_url)
 
-# Cargar los datos desde las URLs
-datos = cargar_datos(df_data)
-datos_pib = cargar_datos(df_pib)
-datos_transporte = cargar_datos(df_transporte)
-datos_partidas = cargar_datos(df_partidas)
-
-# Validar que los datos se hayan cargado correctamente
-if datos is None or datos_pib is None or datos_transporte is None or datos_partidas is None:
+# Verificar que la columna '2019' está presente
+if '2019' in datos.columns:
+    # Seleccionar las columnas relevantes
+    datos = datos[['pais', 'x', 'y', '2019']].dropna()
+    datos = datos.rename(columns={'2019': 'Viajes aéreos', 'pais': 'País', 'x': 'Coordenada x', 'y': 'Coordenada y'})
+else:
+    st.error("La columna '2019' no está disponible en los datos.")
     st.stop()
 
-# Renombrar columnas en `datos`
-columnas_espaniol = {
-    'SOVEREIGNT': 'País',
-    'SOV_A3': 'Código ISO',
-    'TYPE': 'Tipo',
-    'LABEL_X': 'Coordenada x',
-    'LABEL_Y': 'Coordenada y'
-}
-datos = datos.rename(columns=columnas_espaniol)
+# Crear barra lateral con lista de países
+st.sidebar.title("Opciones de Filtro")
+opciones_paises = ['Todos'] + sorted(datos['País'].unique())
+pais_seleccionado = st.sidebar.selectbox("Selecciona un país:", opciones_paises)
 
-# Seleccionar columnas relevantes
-columnas = ['País', 'Código ISO', 'Tipo', 'Coordenada x', 'Coordenada y']
-datos = datos[columnas]
-
-# Obtener la lista de países únicos
-lista_paises = datos['País'].unique().tolist()
-lista_paises.sort()
-
-# Añadir la opción "Todos" al inicio de la lista
-opciones_paises = ['Todos'] + lista_paises
-
-# Crear el selectbox en la barra lateral
-pais_seleccionado = st.sidebar.selectbox(
-    'Selecciona un país',
-    opciones_paises
-)
-
-# Filtrar los datos según la selección
+# Filtrar datos según la selección
 if pais_seleccionado != 'Todos':
-    # Filtrar los datos para el país seleccionado
     datos_filtrados = datos[datos['País'] == pais_seleccionado]
-    # Obtener el Código ISO del país seleccionado
-    codigo_iso_seleccionado = datos_filtrados['Código ISO'].iloc[0]
 else:
-    # No aplicar filtro
-    datos_filtrados = datos.copy()
-    codigo_iso_seleccionado = None
+    datos_filtrados = datos
+
+# Título de la página principal
+st.title("Datos de Viajes Aéreos y Gráfico Interactivo (2019)")
 
 # Mostrar tabla de datos filtrados
-st.subheader("Datos de Interés")
+st.subheader("Datos de Viajes Aéreos (2019)")
 st.dataframe(datos_filtrados, hide_index=True)
 
-# Crear gráfico de PIB o datos del transporte aéreo según el país
-if 'pais' in datos_transporte.columns:
-    # Transformar datos de transporte
-    df_transporte_melted = datos_transporte.melt(id_vars=['pais'], var_name='Year', value_name='GDP')
-    df_cleaned_t = df_transporte_melted.dropna(subset=['GDP'])
-    df_cleaned_t['GDP'] = pd.to_numeric(df_cleaned_t['GDP'], errors='coerce')
-    
-    # Agrupar por país
-    df_global_t = df_cleaned_t.groupby('Year')['GDP'].sum().reset_index()
-    df_global_t['pais'] = 'Mundo'
+# Crear gráfico interactivo con Plotly
+fig = px.bar(
+    datos_filtrados,
+    x='País',
+    y='Viajes aéreos',
+    title=f"Viajes Aéreos en {pais_seleccionado if pais_seleccionado != 'Todos' else 'Todos los Países'} (2019)",
+    labels={'País': 'País', 'Viajes aéreos': 'Viajes Aéreos'},
+    color='Viajes aéreos',
+    color_continuous_scale='viridis'
+)
 
-    # Filtrar los datos por país si es necesario
-    if pais_seleccionado != 'Todos':
-        df_global_t = df_global_t[df_global_t['pais'] == pais_seleccionado]
+# Personalizar gráfico
+fig.update_layout(
+    xaxis_title='País',
+    yaxis_title='Viajes Aéreos',
+    template='plotly_white'
+)
 
-    # Crear el gráfico de transporte aéreo
-    fig_transporte = px.line(df_global_t, x='Year', y='GDP', title=f'Transporte aéreo en {pais_seleccionado}')
-    st.plotly_chart(fig_transporte)
+# Mostrar gráfico en Streamlit
+st.plotly_chart(fig, use_container_width=True)
+
+
 
 # MAPA COROPLÉTICO
 import streamlit as st
