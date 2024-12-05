@@ -3,7 +3,6 @@ pandas
 plotly.express 
 geopandas 
 folium
-folium_static
-linear
-requests
-
+streamlit_folium 
+branca.colormap 
+requests 
