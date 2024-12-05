@@ -1,0 +1,9 @@
+streamlit 
+pandas 
+plotly.express 
+geopandas 
+folium
+folium_static
+linear
+requests
+
