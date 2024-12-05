@@ -1,8 +1,8 @@
-streamlit 
-pandas 
-plotly.express 
-geopandas 
+streamlit
+pandas
+plotly
+geopandas
 folium
-streamlit_folium 
-branca.colormap 
-requests 
+streamlit-folium
+branca
+requests
